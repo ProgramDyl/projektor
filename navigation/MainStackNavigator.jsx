@@ -3,6 +3,7 @@ import 'react-native-gesture-handler';
 import { createStackNavigator } from '@react-navigation/stack'
 import { NavigationContainer } from '@react-navigation/native'
 import HomeScreen from '../screens/HomeScreen'
+import MovieDetails from '../screens/MovieDetailsScreen'
 import SearchScreen from '../screens/SearchScreen'
 import FavouritesScreen from '../screens/FavouritesScreen'
 
@@ -18,6 +19,11 @@ const MainStackNavigator = () => {
                     name="Home"
                     component={HomeScreen}
                     options={{ title: 'Home Screen'}}
+                />
+                <Stack.Screen 
+                    name="MovieDetails" 
+                    component={MovieDetails}
+                    optinos={{ title: 'Movie Details Screen'}}
                 />
                 <Stack.Screen
                     name="Search"

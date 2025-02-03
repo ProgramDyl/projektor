@@ -28,8 +28,9 @@ export default function TrendingMovies() {
   };
 
   const handleClick = (item) => {
-    navigation.navigate('Search', { selectedMovie: item });
-  };
+    navigation.navigate('MovieDetails', { selectedMovie: item });
+};
+
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.movieCard} onPress={() => handleClick(item)}>
