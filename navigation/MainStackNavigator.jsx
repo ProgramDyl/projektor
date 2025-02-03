@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack'
 import { NavigationContainer } from '@react-navigation/native'
 import HomeScreen from '../screens/HomeScreen'
 import SearchScreen from '../screens/SearchScreen'
-import MoviesScreen from '../screens/MoviesScreen'
+import FavouritesScreen from '../screens/FavouritesScreen'
 
 const Stack = createStackNavigator();
 
@@ -13,7 +13,7 @@ const MainStackNavigator = () => {
         <NavigationContainer>
 
             <Stack.Navigator>
-                
+            
                 <Stack.Screen
                     name="Home"
                     component={HomeScreen}
@@ -25,9 +25,9 @@ const MainStackNavigator = () => {
                     options={{ title: 'Search Screen '}}
                 />
                 <Stack.Screen
-                    name="Movies"
-                    component={MoviesScreen}
-                    options={{ title: 'Movies Screen '}}
+                    name="Favourites"
+                    component={FavouritesScreen}
+                    options={{ title: 'Favourites Screen '}}
                 />
             </Stack.Navigator>
         

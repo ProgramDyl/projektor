@@ -9,7 +9,8 @@ const trendingMoviesEndpoint = `${apiBaseUrl}/trending/movie/day?language=en-US`
 const fallbackMoviePoster = '../assets/akira.jpg'
 
 // gets full image url with width of 500
-export const image500 = path => path ? `https://image.tmdb.org/t/p/w500/${path}` : null;
+export const image500 = (path) => `https://image.tmdb.org/t/p/w500${path}`;
+
 
 // function to make api call
 const apiCall = async (endpoint) => {

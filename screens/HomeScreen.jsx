@@ -1,15 +1,16 @@
-import { View, Text, Platform, TouchableOpacity, ScrollView, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bars3CenterLeftIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { StatusBar } from "expo-status-bar";
-import TrendingMovies from '../components/trendingMovies'
+import TrendingMovies from '../components/trendingMovies';
+import Loading from "../components/Loading";
+import FavouritesScreen from "./FavouritesScreen";
 import { useEffect, useState } from "react";
 import { useNavigation } from '@react-navigation/native';
-import Loading from "../components/Loading";
 
-const ios = Platform.OS == "ios";
 const HomeScreen = () => {
     const [loading, setLoading] = useState(true);
+    const [favourites, setFavourites] = useState([]);
 
     const navigation = useNavigation();
 
@@ -23,7 +24,12 @@ const HomeScreen = () => {
             <View style={styles.innerContainer}>
                 <StatusBar style="light" />
                 <View style={styles.header}>
-                    <Bars3CenterLeftIcon size={30} strokeWidth={2} color="white" />
+                    <Bars3CenterLeftIcon
+                        size={30}
+                        strokeWidth={2}
+                        color="white"
+                        onPress={() => navigation.navigate("Favourites")}
+                    />
                     <Text style={styles.title}>
                         <Text style={styles.titleM}>P</Text>rojektor
                     </Text>
@@ -36,9 +42,14 @@ const HomeScreen = () => {
                 </View>
 
                 {loading ? <Loading /> : (
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollView}>
-                        <TrendingMovies />
-                    </ScrollView>
+                    <FlatList
+                        data={[]}
+                        renderItem={null}
+                        keyExtractor={(item, index) => index.toString()}
+                        ListHeaderComponent={<TrendingMovies />}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.scrollView}
+                    />
                 )}
             </View>
         </SafeAreaView>
@@ -78,7 +89,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     scrollView: {
-        paddingBottom: 10,
+        paddingBottom: 100,
     },
 });
 

@@ -1,47 +1,36 @@
-import { View, Text, TouchableOpacity, Image, Dimensions, StyleSheet, FlatList } from 'react-native';
+import { Platform, View, Text, TouchableOpacity, Image, Dimensions, StyleSheet, FlatList } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { fetchTrendingMovies, image500, fallbackMoviePoster } from '../api/apiCalls';
 
-// get device width
-let { width } = Dimensions.get('window');
+let { width, height } = Dimensions.get('window');
 
 export default function TrendingMovies() {
-  // state for trending movies data
   const [data, setData] = useState([]);
-  // state for loading status
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
-    // fetch trending movies when component mounts
+    console.log(`Platform: ${Platform.OS}`);
     getTrendingMovies();
   }, []);
 
-  // function to fetch trending movies
   const getTrendingMovies = async () => {
-    // set loading to true before fetching data
     setLoading(true);
-    // fetch data from api
     const response = await fetchTrendingMovies();
-    console.log("Fetched trending movies:", response); // log fetched data
+    console.log("Fetched trending movies:", response);
     if (response) {
-      // set data to response
       setData(response);
     } else {
-      // show alert if no movies found
-      alert('no trending movies found');
+      alert('No trending movies found');
     }
-    // set loading to false after fetching data
     setLoading(false);
   };
 
-  // function to handle movie click
   const handleClick = (item) => {
-    navigation.navigate("Movie", item);
+    navigation.navigate('Search', { selectedMovie: item });
   };
 
-  // render item for FlatList
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.movieCard} onPress={() => handleClick(item)}>
       <Image
@@ -54,13 +43,10 @@ export default function TrendingMovies() {
 
   return (
     <View style={styles.container}>
-      {/* title */}
-      <Text style={styles.title}>trending movies</Text>
+      <Text style={styles.title}>Today's #25 Trending Films</Text>
       {loading ? (
-        // show loading text while fetching data
-        <Text style={styles.loadingText}>loading...</Text>
+        <Text style={styles.loadingText}>Loading...</Text>
       ) : (
-        // render FlatList with grid layout
         <FlatList
           data={data}
           renderItem={renderItem}

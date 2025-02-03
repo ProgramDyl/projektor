@@ -1,40 +1,86 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, FlatList, TouchableOpacity, Image, Button, ActivityIndicator, ScrollView, Platform, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { debounce } from 'lodash';
+import { StyleSheet, View, Text, TextInput, FlatList, TouchableOpacity, Image, Button, ActivityIndicator, Dimensions } from 'react-native';
 import axios from 'axios';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 const SearchScreen = () => {
     const [title, setTitle] = useState('');
-    const [movie, setMovie] = useState();
+    const [movie, setMovie] = useState(null);
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState([]);
+    const [suggestions, setSuggestions] = useState([]);
+    const [favourites, setFavourites] = useState([]);
+    const navigation = useNavigation();
 
+    // Fetch favourites from async storage
+    useEffect(() => {
+        const fetchFavourites = async () => {
+            try {
+                const storedFavourites = await AsyncStorage.getItem('favourites');
+                if (storedFavourites) {
+                    setFavourites(JSON.parse(storedFavourites));
+                }
+            } catch (error) {
+                console.error('Error fetching favourites', error);
+            }
+        };
+        fetchFavourites();
+    }, []);
 
+    // Add or remove movie from favourites
+    const handleFavouritePress = async (movie) => {
+        try {
+            const isFav = favourites.some(fav => fav.imdbID === movie.imdbID);
+            let updatedFavourites;
+            if (isFav) {
+                updatedFavourites = favourites.filter(fav => fav.imdbID !== movie.imdbID);
+            } else {
+                updatedFavourites = [movie, ...favourites];
+            }
+            setFavourites(updatedFavourites);
+            await AsyncStorage.setItem('favourites', JSON.stringify(updatedFavourites));
+        } catch (error) {
+            console.error('Error updating favourites', error);
+        }
+    };
 
+    // Fetch suggestions when title length > 2
+    useEffect(() => {
+        if (title.length > 2) {
+            fetchSuggestions();
+        } else {
+            setSuggestions([]);
+        }
+    }, [title]);
 
-    /*TODO: improve search functionality:
-    * 
-    *
-    * https://stackoverflow.com/questions/63295054/how-to-execute-api-call-after-entering-3-characters-in-field
-    * REMINDER: look at 'debounce' for better querying
-    *
-    * 
-    * 
-    * 
-    */
+    // Debounced suggestion fetch
+    const fetchSuggestions = debounce(() => {
+        const url = `http://www.omdbapi.com/?s=${encodeURIComponent(title)}&apikey=302daf8f`;
+        axios.get(url)
+            .then(response => {
+                if (response.data.Response === 'True') {
+                    setSuggestions(response.data.Search);
+                } else {
+                    setSuggestions([]);
+                }
+            })
+            .catch(error => console.error('Error fetching suggestions', error));
+    }, 300);
 
+    // Search for a movie
     const movieSearch = () => {
         setLoading(true);
         const url = `http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=302daf8f`;
-
-        // get the movie data
         axios.get(url)
             .then(response => {
                 const data = response.data;
                 setLoading(false);
                 if (data.Response === 'True') {
                     setMovie(data);
-                    setHistory([data, ...history]); // Add the movie to the search history
+                    setHistory([data, ...history]);
                 } else {
                     setMovie(null);
                     alert('Movie not found!');
@@ -46,51 +92,73 @@ const SearchScreen = () => {
             });
     };
 
-    const renderItem = ({ item }) => (
-        <TouchableOpacity onPress={() => setMovie(item)}>
-            <Text style={styles.historyItem}>{item.Title} ({item.Year})</Text>
-        </TouchableOpacity>
-    );
+    // Render items in the FlatList
+    const renderItem = ({ item }) => {
+        if (item.type === 'searchBar') {
+            return (
+                <View style={styles.searchContainer}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder='Search for a movie'
+                        value={title}
+                        onChangeText={setTitle}
+                    />
+                    <Button title="Search" onPress={movieSearch} />
+                </View>
+            );
+        } else if (item.type === 'suggestion') {
+            return (
+                <TouchableOpacity onPress={() => { setTitle(item.data.Title); setSuggestions([]); }}>
+                    <Text style={styles.suggestionItem}>{item.data.Title}</Text>
+                </TouchableOpacity>
+            );
+        } else if (item.type === 'movie') {
+            return (
+                <View style={styles.movieContainer}>
+                    <Image
+                        source={{ uri: item.data.Poster }}
+                        style={styles.poster}
+                    />
+                    <View style={styles.detailsContainer}>
+                        <Text style={styles.title}>{item.data.Title} ({item.data.Year})</Text>
+                        <TouchableOpacity onPress={() => handleFavouritePress(item.data)} style={styles.starIconContainer}>
+                            <Text style={styles.starIcon}>{favourites.some(fav => fav.imdbID === item.data.imdbID) ? '★' : '☆'}</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.plot}>{item.data.Plot}</Text>
+                        <Text style={styles.details}>Genre: {item.data.Genre}</Text>
+                        <Text style={styles.details}>Director: {item.data.Director}</Text>
+                        <Text style={styles.details}>Cast: {item.data.Actors}</Text>
+                        <Text style={styles.details}>Runtime: {item.data.Runtime}</Text>
+                        <Text style={styles.details}>Rating: {item.data.imdbRating}</Text>
+                    </View>
+                </View>
+            );
+        } else if (item.type === 'history') {
+            return (
+                <TouchableOpacity onPress={() => setMovie(item.data)}>
+                    <Text style={styles.historyItem}>{item.data.Title} ({item.data.Year})</Text>
+                </TouchableOpacity>
+            );
+        }
+    };
+
+    // Combine all data into a single array for FlatList
+    const data = [
+        { type: 'searchBar' },
+        ...(suggestions.length > 0 ? suggestions.map(suggestion => ({ type: 'suggestion', data: suggestion })) : []),
+        ...(movie ? [{ type: 'movie', data: movie }] : []),
+        ...(history.map(historyItem => ({ type: 'history', data: historyItem }))),
+    ];
 
     return (
         <SafeAreaView style={styles.container}>
             <FlatList
-                data={history}
+                data={data}
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
-                ListHeaderComponent={
-                    <>
-                        <View style={styles.searchContainer}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder='Search for a movie'
-                                value={title}
-                                onChangeText={setTitle}
-                            />
-                            <Button title="Search" onPress={movieSearch} />
-                        </View>
-                        {loading && <ActivityIndicator size="large" color="#0000ff" />}
-                        {movie && (
-                            <View style={styles.movieContainer}>
-                                <Image
-                                    source={{ uri: movie.Poster }}
-                                    style={styles.poster}
-                                />
-                                <View style={styles.detailsContainer}>
-                                    <Text style={styles.title}>{movie.Title} ({movie.Year})</Text>
-                                    <Text style={styles.plot}>{movie.Plot}</Text>
-                                    <Text style={styles.details}>Genre: {movie.Genre}</Text>
-                                    <Text style={styles.details}>Director: {movie.Director}</Text>
-                                    <Text style={styles.details}>Cast: {movie.Actors}</Text>
-                                    <Text style={styles.details}>Runtime: {movie.Runtime}</Text>
-                                    <Text style={styles.details}>Rating: {movie.imdbRating}</Text>
-                                </View>
-                            </View>
-                        )}
-                    </>
-                }
-                style={styles.historyList}
+                contentContainerStyle={styles.scrollContainer}
             />
+            <Button title="View Favourites" onPress={() => navigation.navigate('Favourites', { favourites })} />
         </SafeAreaView>
     );
 };
@@ -101,14 +169,6 @@ const styles = StyleSheet.create({
         padding: 16,
         backgroundColor: '#12343b',
     },
-    button: {
-        backgroundColor: '#0000FF', // Standout blue button
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-        borderColor: 'black', // Line 52: Add black border
-        borderWidth: 1, // Line 53: Set border width
-    },
     scrollContainer: {
         flexGrow: 1,
     },
@@ -116,7 +176,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        Color: 'white',
+        marginBottom: 16,
     },
     input: {
         height: 40,
@@ -127,22 +187,27 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         color: 'black',
     },
+    suggestionItem: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+        backgroundColor: '#fff',
+    },
     movieContainer: {
-        flexDirection: 'column', 
+        flexDirection: 'column',
         marginTop: 16,
-        alignItems: 'center', 
+        alignItems: 'center',
         marginBottom: 16,
     },
     poster: {
-        width: Dimensions.get('window').width * 0.7, 
-        height: Dimensions.get('window').width * 1.0, 
+        width: Dimensions.get('window').width * 0.7,
+        height: Dimensions.get('window').width,
         resizeMode: 'contain',
-        marginBottom: '30px',
     },
     detailsContainer: {
         width: '100%',
         padding: 16,
-        alignItems: 'center', 
+        alignItems: 'center',
         backgroundColor: '#2d545e',
     },
     title: {
@@ -150,30 +215,21 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginTop: 8,
         textAlign: 'center',
+        color: '#fff',
     },
-    // react-native/platform https://reactnative.dev/docs/platform
     plot: {
-        fontSize: Platform.select({
-            ios: 16,
-            android: 17,
-            web: 18,
-        }),
+        fontSize: 16,
         marginTop: 8,
         textAlign: 'center',
         width: '100%',
+        color: '#fff',
     },
     details: {
-        fontSize: Platform.select({
-            ios: 14,
-            android: 14,
-            web: 16,
-        }),
+        fontSize: 14,
         marginTop: 4,
         textAlign: 'center',
         width: '100%',
-    },
-    historyList: {
-        marginTop: 16,
+        color: '#fff',
     },
     historyItem: {
         fontSize: 18,
@@ -181,6 +237,15 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
         color: '#fff',
+    },
+    starIconContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    starIcon: {
+        fontSize: 24,
+        color: '#ffd700',
     },
 });
 
