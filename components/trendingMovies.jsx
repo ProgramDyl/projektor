@@ -1,11 +1,10 @@
-import { View, Text, TouchableWithoutFeedback, Image, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions, StyleSheet, FlatList } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import Carousel from 'react-native-reanimated-carousel';
 import { useNavigation } from '@react-navigation/native';
 import { fetchTrendingMovies, image500, fallbackMoviePoster } from '../api/apiCalls';
 
-// get device width and height
-let { width, height } = Dimensions.get('window');
+// get device width
+let { width } = Dimensions.get('window');
 
 export default function TrendingMovies() {
   // state for trending movies data
@@ -26,9 +25,9 @@ export default function TrendingMovies() {
     // fetch data from api
     const response = await fetchTrendingMovies();
     console.log("Fetched trending movies:", response); // log fetched data
-    if (response && response.results) {
-      // set data to response results
-      setData(response.results);
+    if (response) {
+      // set data to response
+      setData(response);
     } else {
       // show alert if no movies found
       alert('no trending movies found');
@@ -42,62 +41,73 @@ export default function TrendingMovies() {
     navigation.navigate("Movie", item);
   };
 
+  // render item for FlatList
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.movieCard} onPress={() => handleClick(item)}>
+      <Image
+        source={typeof item.poster_path === 'string' ? { uri: image500(item.poster_path) } : fallbackMoviePoster}
+        style={styles.movieImage}
+      />
+      <Text style={styles.movieTitle}>{item.title}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       {/* title */}
-      <Text style={styles.title}>trending</Text>
+      <Text style={styles.title}>trending movies</Text>
       {loading ? (
         // show loading text while fetching data
         <Text style={styles.loadingText}>loading...</Text>
       ) : (
-        // render carousel with trending movies
-        <Carousel
+        // render FlatList with grid layout
+        <FlatList
           data={data}
-          renderItem={({ item }) => <MovieCard item={item} handleClick={handleClick} />}
-          width={width * 0.62}
-          loop={false}
-          style={styles.carouselStyle}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          numColumns={2}
+          contentContainerStyle={styles.grid}
         />
       )}
     </View>
   );
 }
 
-const MovieCard = ({ item, handleClick }) => {
-  // get full poster url or fallback image
-  const posterUrl = image500(item.poster_path) || fallbackMoviePoster;
-
-  return (
-    <TouchableWithoutFeedback onPress={() => handleClick(item)}>
-      <Image
-        source={{ uri: posterUrl }}
-        style={styles.movieImage}
-      />
-    </TouchableWithoutFeedback>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 32,
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#1f2937',
   },
   title: {
     color: 'white',
     fontSize: 24,
-    marginHorizontal: 16,
     marginBottom: 20,
+    textAlign: 'center',
   },
   loadingText: {
     color: 'white',
+    fontSize: 18,
+    marginVertical: 20,
     textAlign: 'center',
   },
-  carouselStyle: {
-    display: 'flex',
+  grid: {
     alignItems: 'center',
   },
+  movieCard: {
+    margin: 8,
+    alignItems: 'center',
+    width: width * 0.4,
+  },
   movieImage: {
-    width: width * 0.6,
-    height: height * 0.4,
-    borderRadius: 24,
+    width: width * 0.4,
+    height: (width * 0.4) * 1.5,
+    borderRadius: 12,
+  },
+  movieTitle: {
+    color: 'white',
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: 'center',
   },
 });

@@ -18,7 +18,7 @@ const apiCall = async (endpoint) => {
         method: 'GET',
         url: endpoint,
         headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzNTU0YzMyOWMzOWMxOTM3Mjk0Njg2MjA3ZWM4MDc4NiIsIm5iZiI6MTczODU0NzQyMS44MjksInN1YiI6IjY3YTAyMGRkZjBmOWRiZGJhNjk1N2Y1MSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.vWMv_EbUxeaHYg4b4zdOoL8kfAbb2xBfrbYaRr-02aQ', // using your Bearer token
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzNTU0YzMyOWMzOWMxOTM3Mjk0Njg2MjA3ZWM4MDc4NiIsIm5iZiI6MTczODU0NzQyMS44MjksInN1YiI6IjY3YTAyMGRkZjBmOWRiZGJhNjk1N2Y1MSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.vWMv_EbUxeaHYg4b4zdOoL8kfAbb2xBfrbYaRr-02aQ', 
             'accept': 'application/json'
         }
     };
@@ -27,7 +27,7 @@ const apiCall = async (endpoint) => {
         // send async req to api endpoint
         const response = await axios.request(options);
         console.log("API response:", response.data); // log response data
-        return response.data;
+        return response.data.results.slice(0, 24);
     } catch (err) {
         console.log("error: " + err);
         return {};
