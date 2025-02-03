@@ -16,9 +16,8 @@ const MainStackNavigator = () => {
                 <Stack.Screen
                     name="Home"
                     component={HomeScreen}
-                    options={{ title: 'Home Screen' }}
+                    options={{ title: 'Home Screen'}}
                 />
-                
                 <Stack.Screen
                     name="Search"
                     component={SearchScreen}

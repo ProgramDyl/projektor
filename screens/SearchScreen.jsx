@@ -99,6 +99,15 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
+        backgroundColor: '#12343b',
+    },
+    button: {
+        backgroundColor: '#0000FF', // Standout blue button
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+        borderColor: 'black', // Line 52: Add black border
+        borderWidth: 1, // Line 53: Set border width
     },
     scrollContainer: {
         flexGrow: 1,
@@ -107,6 +116,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        Color: 'white',
     },
     input: {
         height: 40,
@@ -114,21 +124,26 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         padding: 10,
         flex: 1,
+        backgroundColor: 'white',
+        color: 'black',
     },
     movieContainer: {
         flexDirection: 'column', 
         marginTop: 16,
         alignItems: 'center', 
+        marginBottom: 16,
     },
     poster: {
-        width: Dimensions.get('window').width * 0.8, 
-        height: Dimensions.get('window').width * 1.2, 
+        width: Dimensions.get('window').width * 0.7, 
+        height: Dimensions.get('window').width * 1.0, 
         resizeMode: 'contain',
+        marginBottom: '30px',
     },
     detailsContainer: {
         width: '100%',
         padding: 16,
         alignItems: 'center', 
+        backgroundColor: '#2d545e',
     },
     title: {
         fontSize: 24,
@@ -140,7 +155,7 @@ const styles = StyleSheet.create({
     plot: {
         fontSize: Platform.select({
             ios: 16,
-            android: 16,
+            android: 17,
             web: 18,
         }),
         marginTop: 8,
@@ -165,6 +180,7 @@ const styles = StyleSheet.create({
         padding: 8,
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
+        color: '#fff',
     },
 });
 
