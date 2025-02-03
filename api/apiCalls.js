@@ -28,7 +28,7 @@ const apiCall = async (endpoint) => {
         // send async req to api endpoint
         const response = await axios.request(options);
         console.log("API response:", response.data); // log response data
-        return response.data.results.slice(0, 24);
+        return response.data.results.slice(0, 50);
     } catch (err) {
         console.log("error: " + err);
         return {};
